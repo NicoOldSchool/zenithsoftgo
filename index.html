@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZenithSoft GO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="print-style.css" media="print" />
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    
+    // Configuración de Firebase
+    // Opción 1: Si tienes config.js (recomendado para GitHub Pages)
+    let firebaseConfig;
+    
+    if (window.firebaseConfig) {
+      // Usar configuración externa
+      firebaseConfig = window.firebaseConfig;
+    } else {
+      // Configuración por defecto (reemplaza con tu configuración)
+      firebaseConfig = {
+        apiKey: "AIzaSyAo-WnAXeohzlqTOA0dWJHCVvo8qsbriLU",
+        authDomain: "zenithsoftgo.firebaseapp.com",
+        projectId: "zenithsoftgo",
+        storageBucket: "zenithsoftgo.appspot.com",
+        messagingSenderId: "499909042803",
+        appId: "1:499909042803:web:tu-app-id"
+      };
+    }
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    // Hacer disponible globalmente
+    window.auth = auth;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.signOut = signOut;
+  </script>
+  
+  <!-- Cargar configuración externa si existe -->
+  <script src="config.js" onerror="console.log('config.js no encontrado, usando configuración por defecto')"></script>
+  </head>
+<body>
+
+<!-- Pantalla de Login -->
+<div id="login-screen" class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>ZenithSoft GO</h1>
+      <p>Sistemas de Gestión Odontológica</p>
+    </div>
+    
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" required placeholder="usuario@ejemplo.com">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" required placeholder="••••••••">
+      </div>
+      
+      <button type="submit" class="btn-login" id="btn-login">
+        <span class="btn-text">Iniciar Sesión</span>
+        <span class="btn-loading" style="display: none;">Iniciando...</span>
+      </button>
+      
+      <div class="demo-separator">
+        <span>o</span>
+      </div>
+      
+      <button type="button" class="btn-demo" id="btn-demo">
+        <span class="btn-text">🚀 Modo Demo</span>
+        <span class="btn-subtitle">Probar todas las características</span>
+      </button>
+      
+      <div id="login-error" class="error-message" style="display: none;"></div>
+    </form>
+    
+    <div class="login-footer">
+      <p>Los usuarios son gestionados por el administrador</p>
+    </div>
+  </div>
+</div>
+
+<!-- Aplicación Principal (oculta inicialmente) -->
+<div id="main-app" style="display: none;">
+<header>
+  <div class="header-content">
+    <h1>ZenithSoft GO</h1>
+    <small>ZenithSoft • Soluciones Informáticas Inteligentes</small>
+  </div>
+  <div class="header-right">
+    <div class="header-actions">
+      <button class="btn primary btn-tooltip" id="btn-guardar" type="button"
+        data-tooltip="Exporta todos los datos (pacientes, prácticas, historias, odontogramas e imágenes) a un archivo JSON de respaldo en tu equipo.">
+        💾 Guardar
+      </button>
+      <button class="btn btn-tooltip" id="btn-cargar" type="button"
+        data-tooltip="Importa datos desde un archivo de respaldo JSON guardado previamente. Se te pedirá confirmación antes de aplicar los cambios.">
+        📁 Cargar
+      </button>
+    </div>
+    <input id="restore-file" type="file" accept="application/json" hidden />
+    <div class="user-info">
+      <span id="user-email">Usuario</span>
+      <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Tabs horizontales siempre visibles -->
+  <nav class="horizontal-tabs">
+    <div class="tabs-container">
+      <div class="tabs-group">
+        <button class="tab-btn active" data-tab="pacientes">
+          <span class="tab-icon">👥</span>
+          <span class="tab-text">Pacientes</span>
+        </button>
+        <button class="tab-btn" data-tab="detalle">
+          <span class="tab-icon">📋</span>
+          <span class="tab-text">Historia Clínica</span>
+        </button>
+        <button class="tab-btn" data-tab="estadisticas">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Estadísticas</span>
+        </button>
+        <button class="tab-btn" data-tab="configuracion">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-text">Configuración</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section id="tab-pacientes">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn primary" id="btn-new-patient">Nuevo paciente</button>
+      </div>
+
+      <div class="card">
+        <h4>Listado de pacientes</h4>
+        <div class="row" style="margin:8px 0 12px">
+          <input id="search-patient" placeholder="Buscar por nombre, apellido, DNI, teléfono, email, dirección, derivado por, observaciones..." />
+          <select id="filter-age">
+            <option value="">Rango de edad</option>
+            <option value="0.01-12">0–12</option>
+            <option value="13-17">13–17</option>
+            <option value="18-39">18–39</option>
+            <option value="40-64">40–64</option>
+            <option value="65-120">65+</option>
+          </select>
+        </div>
+        <div style="overflow:auto; max-height:50vh">
+          <table>
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>DNI</th>
+                <th>Edad</th>
+                <th>Teléfono</th>
+                <th>Derivado por</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="patients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+           <section id="tab-configuracion" style="display:none">
+             <div class="config-tabs">
+               <nav class="horizontal-tabs config-tab-nav">
+                 <div class="tabs-container">
+                   <div class="tabs-group">
+                     <button class="tab-btn config-tab-btn active" data-config-tab="profesional">
+                       <span class="tab-icon">👤</span>
+                       <span class="tab-text">Información del Profesional</span>
+                     </button>
+                     <button class="tab-btn config-tab-btn" data-config-tab="practicas">
+                       <span class="tab-icon">🦷</span>
+                       <span class="tab-text">Gestión de Prácticas</span>
+                     </button>
+                   </div>
+                 </div>
+               </nav>
+               
+               <div class="config-tab-content">
+                 <div id="config-profesional" class="config-tab-panel active">
+                   <div class="card">
+                     <h4>Información del Profesional</h4>
+                     <div class="grid cols-2">
+                       <div>
+                         <label>Nombre del Profesional/Consultorio</label>
+                         <input id="professional-name" placeholder="Ej: Dr. Juan Pérez" />
+                       </div>
+                       <div>
+                         <label>Especialidad (opcional)</label>
+                         <input id="professional-specialty" placeholder="Ej: Odontología General" />
+                       </div>
+                     </div>
+                     <div style="margin-top:10px; display:flex; gap:8px">
+                       <button class="btn primary" id="btn-save-professional">Guardar</button>
+                       <button class="btn" id="btn-clear-professional">Limpiar</button>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div id="config-practicas" class="config-tab-panel">
+                   <div class="card">
+                     <h4>Gestión de Prácticas</h4>
+                     <div class="grid cols-1">
+                       <div>
+                         <h5>Nueva práctica</h5>
+                         <div class="grid cols-2">
+                           <div>
+                             <label>Nombre</label>
+                             <input id="p-name" />
+                           </div>
+                           <div>
+                             <label>Costo</label>
+                             <input id="p-cost" type="number" step="0.01" />
+                           </div>
+                           <div>
+                             <label>Categoría (opcional)</label>
+                             <input id="p-cat" />
+                           </div>
+                           <div>
+                             <label>Descripción (opcional)</label>
+                             <input id="p-desc" />
+                           </div>
+                         </div>
+                         <div style="margin-top:10px; display:flex; gap:8px">
+                           <button class="btn primary" id="btn-add-practice">Agregar</button>
+                           <button class="btn" id="btn-clear-practice">Limpiar</button>
+                         </div>
+                       </div>
+
+                       <div style="margin-top: 20px;">
+                         <h5>Prácticas precargadas</h5>
+                         <div class="practices-container">
+                           <div class="practices-header">
+                             <span class="practices-count" id="practices-count">0 prácticas</span>
+                             <div class="practices-actions">
+                               <button class="btn-icon" id="btn-refresh-practices" title="Actualizar">
+                                 <span>🔄</span>
+                               </button>
+                             </div>
+                           </div>
+                           <div class="practices-table-wrapper">
+                             <table class="practices-table">
+                               <thead>
+                                 <tr>
+                                   <th>Práctica</th>
+                                   <th>Costo</th>
+                                   <th>Categoría</th>
+                                   <th>Acciones</th>
+                                 </tr>
+                               </thead>
+                               <tbody id="practices-tbody"></tbody>
+                             </table>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </section>
+
+    <section id="tab-detalle" style="display:none">
+      <div id="no-patient" class="card">
+        <h4>Selecciona un paciente</h4>
+        <p class="muted">Desde la pestaña “Pacientes”, haz clic en Ver para abrir su historia clínica.</p>
+      </div>
+
+      <div id="patient-detail" style="display:none">
+        <div class="card">
+          <h4>Datos del paciente</h4>
+          <div class="grid cols-4">
+            <div>
+              <label>Nombre</label>
+              <input id="pd-nombre" />
+            </div>
+            <div>
+              <label>Apellido</label>
+              <input id="pd-apellido" />
+            </div>
+            <div>
+              <label>Fecha de nacimiento (DD-MM-AAAA)</label>
+              <input id="pd-nac" placeholder="DD-MM-AAAA" />
+            </div>
+            <div>
+              <label>Edad (auto)</label>
+              <input id="pd-edad" disabled />
+            </div>
+            <div>
+              <label>DNI</label>
+              <input id="pd-dni" />
+            </div>
+            <div>
+              <label>Teléfono</label>
+              <input id="pd-tel" />
+            </div>
+            <div>
+              <label>Dirección</label>
+              <input id="pd-dir" />
+            </div>
+            <div>
+              <label>Derivado por</label>
+              <input id="pd-derivado" />
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px">
+            <button class="btn primary" id="btn-print">Imprimir HC</button>
+            <button class="btn ok" id="btn-save-patient">Guardar</button>
+            <button class="btn danger" id="btn-delete-patient">Eliminar paciente</button>
+          </div>
+        </div>
+
+        <div class="grid cols-1">
+          <div class="card">
+            <h4>Historia clínica</h4>
+            <div class="grid cols-3">
+              <div>
+                <label>Fecha</label>
+                <input id="h-fecha" type="date" />
+              </div>
+              <div>
+                <label>Práctica</label>
+                <input id="h-practica" type="text" placeholder="Buscar práctica..." />
+                <div id="practice-results" style="position:absolute; z-index:10; background:var(--panel); border:1px solid var(--line); border-radius:8px; max-height:200px; overflow-y:auto; display:none;"></div>
+              </div>
+              <div>
+                <label>Profesional</label>
+                <input id="h-odonto" />
+              </div>
+              <div>
+                <label>Valor</label>
+                <input id="h-valor" type="number" step="0.01" />
+                <label>Próxima cita</label><input id="h-proxima-cita" type="datetime-local" />
+              </div>
+              <div>
+                <label>Abonado</label>
+                <input id="h-abonado" type="number" step="0.01" />
+              </div>
+              <div>
+                <label>Saldo (auto)</label>
+                <input id="h-saldo" type="number" step="0.01" disabled />                
+              </div>
+              <div class="row" style="grid-column:1/-1">
+                <div>                  
+                  <label>Observaciones</label>
+                  <textarea id="h-obs"></textarea>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:1px">
+              <button class="btn primary" id="btn-add-history">Agregar entrada</button>
+            </div>
+
+            <div style="margin-top:1px; max-height:38vh; overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Práctica</th>
+                    <th>Valor</th>
+                    <th>Abonado</th>
+                    <th>Saldo</th>
+                    <th>Profesional</th>
+                    <th>Próxima cita</th>
+                    <th>Observaciones</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Imágenes</h4>
+            <div class="row">
+              <input id="img-file" type="file" accept="image/*" multiple style="display: none;" />
+              <button class="btn" id="btn-add-images">Adjuntar imágenes</button>
+            </div>
+            <div class="thumbs" id="images-thumbs" style="margin-top:5px"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row" style="align-items:center">
+            <h4 style="flex:1">Odontograma</h4>
+            <div class="row" style="gap:5px">
+              <select id="dentition-view">
+                <option value="permanent">Permanente</option>
+                <option value="primary">Temporaria</option>
+                <option value="both">Ambas</option>
+              </select>
+              <button class="btn" id="btn-clear-odont">Limpiar odontograma</button>
+              <button class="btn" id="btn-save-odont">Guardar odontograma</button>
+            </div>
+          </div>
+
+          <div class="legend" style="margin:5px 0 5px">
+            <div class="chip"><span class="color" style="background:var(--caries-activa)"></span> Caries activa</div>
+            <div class="chip"><span class="color" style="background:var(--caries-tratada)"></span> Caries tratada</div>
+            <div class="chip"><span class="color" style="background:var(--rest-amalgama)"></span> Restauración (amalgama)</div>
+            <div class="chip"><span class="color" style="background:var(--rest-composite)"></span> Restauración (composite)</div>
+            <div class="chip"><span class="color" style="background:var(--endo)"></span> Endodoncia</div>
+            <div class="chip"><span class="color" style="background:var(--fractura)"></span> Fractura</div>
+            <div class="chip"><span class="color" style="background:var(--implante)"></span> Implante</div>
+            <div class="chip"><span class="color" style="background:var(--protesis)"></span> Prótesis</div>
+            <div class="chip"><span class="color" style="background:var(--ortodoncia)"></span> Ortodoncia</div>
+            <div class="chip"><span class="color" style="background:var(--ausente)"></span> Ausente/Extraído</div>
+            <div class="chip"><span class="color" style="background:var(--anomalia)"></span> Anomalías</div>
+          </div>
+
+          <div class="odontograma-wrap">
+            <div id="odontograma" class="odontograma"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-estadisticas" style="display:none">
+      <div class="card">
+        <h4>Filtros</h4>
+        <div class="filters">
+          <div>
+            <label>Desde</label>
+            <input id="f-desde" type="date" />
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input id="f-hasta" type="date" />
+          </div>
+          <div>
+            <label>Rango de edad</label>
+            <select id="f-age">
+              <option value="">Todos</option>
+              <option value="0-12">0–12</option>
+              <option value="13-17">13–17</option>
+              <option value="18-39">18–39</option>
+              <option value="40-64">40–64</option>
+              <option value="65-120">65+</option>
+            </select>
+          </div>
+          <div>
+            <label>Tipo de tratamiento</label>
+            <select id="f-practica"><option value="">Todos</option></select>
+          </div>
+          <div style="align-self:flex-end">
+            <button class="btn" id="btn-apply-filters">Aplicar</button>
+            <button class="btn" id="btn-clear-filters">Limpiar</button>            
+            <button class="btn primary" id="btn-print-stats">Imprimir Reporte</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi" style="margin-top:12px">
+        <div class="card"><div class="muted">Entradas</div><div id="kpi-entradas" style="font-size:22px; margin-top:6px">—</div></div>
+        <div class="card"><div class="muted">Facturación (Valor)</div><div id="kpi-valor" style="font-size:22px; margin-top:6px">—</div></div>
+        <div class="card"><div class="muted">Cobrado (Abonado)</div><div id="kpi-abonado" style="font-size:22px; margin-top:6px">—</div></div>
+        <div class="card"><div class="muted">Saldo</div><div id="kpi-saldo" style="font-size:22px; margin-top:6px">—</div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h4>Detalle por práctica</h4>
+        <div style="overflow:auto; max-height:50vh">
+          <table>
+            <thead>
+              <tr>
+                <th>Práctica</th>
+                <th>Cantidad</th>
+                <th>Valor total</th>
+                <th>Abonado total</th>
+                <th>Saldo total</th>
+              </tr>
+            </thead>
+            <tbody id="stats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="modal-patient" class="modal">
+  <header><strong>Nuevo paciente</strong></header>
+  <div class="content">
+    <div class="grid cols-2">
+      <div><label>Nombre</label><input id="m-nombre" /></div>
+      <div><label>Apellido</label><input id="m-apellido" /></div>
+      <div><label>Fecha de nacimiento (DD-MM-AAAA)</label><input id="m-nac" placeholder="DD-MM-AAAA" /></div>
+      <div><label>DNI</label><input id="m-dni" /></div>
+      <div><label>Teléfono</label><input id="m-tel" /></div>
+      <div><label>Dirección</label><input id="m-dir" /></div>
+      <div style="grid-column:1/-1"><label>Derivado por</label><input id="m-derivado" /></div>
+    </div>
+  </div>
+  <footer>
+    <button class="btn" id="m-cancel">Cancelar</button>
+    <button class="btn ok" id="m-save">Guardar</button>
+  </footer>
+</dialog>
+
+<dialog id="modal-practice" class="modal">
+  <header><strong>Editar práctica</strong></header>
+  <div class="content">
+    <div class="grid cols-2">
+      <div><label>Nombre</label><input id="mp-name" /></div>
+      <div><label>Costo</label><input id="mp-cost" type="number" step="0.01" /></div>
+      <div><label>Categoría</label><input id="mp-cat" /></div>
+      <div><label>Descripción</label><input id="mp-desc" /></div>
+    </div>
+  </div>
+  <footer>
+    <button class="btn" id="mp-cancel">Cancelar</button>
+    <button class="btn ok" id="mp-save">Guardar</button>
+  </footer>
+</dialog>
+
+<dialog id="modal-tooth" class="modal">
+  <header><strong id="tooth-title">Pieza</strong></header>
+  <div class="content">
+    <div class="card">
+      <h4>Superficies</h4>
+      <p class="muted">Selecciona el estado por superficie. Para incisivos/caninos, Oclusal corresponde a Incisal.</p>
+      <div class="grid cols-3">
+        <div>
+          <label>Vestibular / Bucal</label>
+          <select class="surf-select" data-surf="v">
+            <option value="">—</option>
+            <option value="caries-activa">Caries activa</option>
+            <option value="caries-tratada">Caries tratada</option>
+            <option value="rest-amalgama">Restauración (amalgama)</option>
+            <option value="rest-composite">Restauración (composite)</option>
+          </select>
+        </div>
+        <div>
+          <label>Lingual / Palatina</label>
+          <select class="surf-select" data-surf="l">
+            <option value="">—</option>
+            <option value="caries-activa">Caries activa</option>
+            <option value="caries-tratada">Caries tratada</option>
+            <option value="rest-amalgama">Restauración (amalgama)</option>
+            <option value="rest-composite">Restauración (composite)</option>
+          </select>
+        </div>
+        <div>
+          <label>Mesial</label>
+          <select class="surf-select" data-surf="m">
+            <option value="">—</option>
+            <option value="caries-activa">Caries activa</option>
+            <option value="caries-tratada">Caries tratada</option>
+            <option value="rest-amalgama">Restauración (amalgama)</option>
+            <option value="rest-composite">Restauración (composite)</option>
+          </select>
+        </div>
+        <div>
+          <label>Distal</label>
+          <select class="surf-select" data-surf="d">
+            <option value="">—</option>
+            <option value="caries-activa">Caries activa</option>
+            <option value="caries-tratada">Caries tratada</option>
+            <option value="rest-amalgama">Restauración (amalgama)</option>
+            <option value="rest-composite">Restauración (composite)</option>
+          </select>
+        </div>
+        <div>
+          <label>Oclusal / Incisal</label>
+          <select class="surf-select" data-surf="o">
+            <option value="">—</option>
+            <option value="caries-activa">Caries activa</option>
+            <option value="caries-tratada">Caries tratada</option>
+            <option value="rest-amalgama">Restauración (amalgama)</option>
+            <option value="rest-composite">Restauración (composite)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Condiciones</h4>
+      <div class="grid cols-3">
+        <div><label><input type="checkbox" class="tc" data-key="endodoncia" /> Endodoncia</label></div>
+        <div><label><input type="checkbox" class="tc" data-key="ausente" /> Pieza ausente</label></div>
+        <div><label><input type="checkbox" class="tc" data-key="extraccion" /> Extracción</label></div>
+        <div>
+          <label>Fractura</label>
+          <select id="t-fractura">
+            <option value="">—</option>
+            <option value="corona">Corona</option>
+            <option value="raiz">Raíz</option>
+          </select>
+        </div>
+        <div>
+          <label>Prótesis</label>
+          <select id="t-protesis">
+            <option value="">—</option>
+            <option value="corona">Corona</option>
+            <option value="puente">Puente</option>
+            <option value="implante">Implante</option>
+            <option value="removible">Removible</option>
+          </select>
+        </div>
+        <div>
+          <label>Ortodoncia</label>
+          <input id="t-ortodoncia" placeholder="Tipo de aparatología (ej.: brackets, alineadores)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>Anomalías</h4>
+      <div class="grid cols-3">
+        <div><label><input type="checkbox" class="an" data-key="retenido" /> Diente retenido</label></div>
+        <div><label><input type="checkbox" class="an" data-key="diastema" /> Diastema</label></div>
+        <div><label><input type="checkbox" class="an" data-key="formaTamano" /> Forma/Tamaño anormal</label></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <button class="btn" id="tooth-cancel">Cerrar</button>
+    <button class="btn ok" id="tooth-save">Aplicar</button>
+    <button class="btn warn" id="tooth-clear">Limpiar pieza</button>
+  </footer>
+</dialog>
+
+<dialog id="modal-img" class="modal image-viewer">
+  <header>
+    <strong id="img-title">Imagen</strong>
+    <div class="header-actions">
+      <button class="btn-icon" id="img-maximize" title="Abrir en nueva pestaña">⛶</button>
+      <span id="img-counter" class="img-counter">1 / 1</span>
+    </div>
+  </header>
+  <div class="content image-content">
+    <button class="nav-btn nav-prev" id="img-prev" title="Imagen anterior">‹</button>
+    <div class="image-container">
+      <img id="viewer-img" alt="" />
+    </div>
+    <button class="nav-btn nav-next" id="img-next" title="Imagen siguiente">›</button>
+  </div>
+  <footer>
+    <button class="btn" id="img-close">Cerrar</button>
+    <button class="btn danger" id="img-delete">Eliminar</button>
+  </footer>
+</dialog>
+
+<dialog id="modal-practice-detail" class="modal">
+  <header><strong>Detalle de práctica</strong></header>
+  <div class="content">
+    <div><label>Nombre</label><p id="pdet-name" class="muted">—</p></div>
+    <div><label>Costo</label><p id="pdet-cost" class="muted">—</p></div>
+    <div><label>Categoría</label><p id="pdet-cat" class="muted">—</p></div>
+    <div><label>Descripción</label><p id="pdet-desc" class="muted">—</p></div>
+  </div>
+  <footer>
+    <button class="btn" id="pdet-close">Cerrar</button>
+  </footer>
+</dialog>
+
+<footer>
+    <center><p><small> Desarrollado por ZenithSoft. © 2025. ¤ Version 1.3.2 ¤ Tel: 3794-807949 ¤ Email: jhonnyatrix@gmail.com</small></p></center>
+</footer>
+</div> <!-- Cierre del div main-app -->
+
+<script src="javascript.js"></script>
+
+<!-- Elemento oculto para descargas -->
+<a id="download-link" style="display: none;"></a>
+
+</body>
+</html>

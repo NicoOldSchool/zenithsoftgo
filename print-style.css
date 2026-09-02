@@ -1,0 +1,99 @@
+/* Estilos para impresión */
+@media print {
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: black;
+    background: white;
+  }
+  
+  .print-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+  }
+  
+  .print-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .print-header .subtitle {
+    font-size: 16px;
+    color: #666;
+    margin-top: 5px;
+  }
+  
+  .print-section {
+    margin-bottom: 25px;
+  }
+  
+  .print-section h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+  }
+  
+  .patient-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .patient-data-grid div {
+    padding: 5px 0;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+  }
+  
+  .images-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .print-image {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+  }
+  
+  .signature-area {
+    margin-top: 40px;
+    border-top: 1px solid #000;
+    padding-top: 10px;
+    text-align: center;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+  
+  /* Ocultar elementos no necesarios en impresión */
+  .no-print {
+    display: none !important;
+  }
+}
+

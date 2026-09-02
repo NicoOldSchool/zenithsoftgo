@@ -1,0 +1,38 @@
+# Archivos de desarrollo
+node_modules/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de backup
+*.backup
+*.bak
+backup-*.json
+
+# Archivos de log
+*.log
+logs/
+
+# Archivos temporales
+tmp/
+temp/
+
+# Archivos de testing
+coverage/
+.nyc_output/
+
+# Archivos de documentación de desarrollo
+README-dev.md
+DEVELOPMENT.md
+

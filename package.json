@@ -1,0 +1,45 @@
+{
+  "name": "zenithsoft-go",
+  "version": "1.3.2",
+  "description": "Sistema de gestión odontológica ZenithSoft GO - Aplicación web profesional para gestión de pacientes, historias clínicas y odontogramas",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "dev": "python -m http.server 8080",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "odontologia",
+    "gestion-pacientes",
+    "historia-clinica",
+    "odontograma",
+    "zenithsoft",
+    "web-app",
+    "javascript",
+    "firebase"
+  ],
+  "author": {
+    "name": "ZenithSoft",
+    "email": "jhonnyatrix@gmail.com",
+    "url": "https://zenithsoft.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zenithsoft/zenithsoft-go"
+  },
+  "homepage": "https://zenithsoft-go.vercel.app",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
+
