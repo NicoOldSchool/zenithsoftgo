@@ -733,16 +733,14 @@ function formatMonthYearBA(yearMonthStr) {
 // Obtiene la fecha desglosada actual en Buenos Aires para cálculos de edad exactos
 function getNowInBA() {
   const now = new Date();
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  const dateStr = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIMEZONE_BA,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
-  }).formatToParts(now);
-  const y = Number(parts.find(p => p.type === 'year').value);
-  const m = Number(parts.find(p => p.month === 'month').value) - 1;
-  const d = Number(parts.find(p => p.type === 'day').value);
-  return { year: y, month: m, day: d };
+  }).format(now); // Retorna "YYYY-MM-DD"
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return { year: y, month: m - 1, day: d };
 }
 
 function parseDOB(ddmmyyyy){
