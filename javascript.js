@@ -90,13 +90,13 @@ function initAuth() {
       // Usuario autenticado
       currentUser = user;
       showMainApp();
-      // Actualizar nombre del usuario
-      await loadProfessionalInfo();
       
       // Inicializar la aplicación si no está ya inicializada
       if (!window.appInitialized) {
         await initializeApp();
         window.appInitialized = true;
+      } else {
+        await loadProfessionalInfo();
       }
     } else {
       // Usuario no autenticado
@@ -811,6 +811,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 async function initializeApp() {
   await openDB();
   await seedPracticesIfEmpty();
+  await loadProfessionalInfo();
   bindNav();
   bindPatients();
   bindPractices();
@@ -2366,14 +2367,9 @@ async function handleRestoreFile(e) {
    ================================ */
 async function loadProfessionalInfo() {
   try {
-    // Verificar que la base de datos esté disponible
+    // Asegurar que la base de datos esté abierta
     if (!db) {
-      console.log('Base de datos no disponible aún, usando email como nombre por defecto');
-      const emailElement = document.getElementById('user-email');
-      if (emailElement) {
-        emailElement.textContent = currentUser?.email?.split('@')[0] || 'Usuario';
-      }
-      return;
+      await openDB();
     }
     
     const professionalInfo = await getById('settings', 'professional');
